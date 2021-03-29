@@ -1,8 +1,11 @@
 package link.tothetracker.lib.util;
 
-import lombok.*;
+import link.tothetracker.lib.LibRuntimeException;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -18,12 +21,12 @@ class JsonUtilTest {
         private String field2;
     }
 
-    private static TmpEntity entity;
+    private TmpEntity entity;
 
-    private static String expected;
+    private String expected;
 
-    @BeforeAll
-    static void beforeAll() {
+    @BeforeEach
+    void before() {
         entity = new TmpEntity("value1", "value2");
         expected = "{\"field1\":\"value1\",\"field2\":\"value2\"}";
     }
@@ -38,6 +41,15 @@ class JsonUtilTest {
     void fromJson() {
         var from = JsonUtil.fromJson(expected, TmpEntity.class);
         Assertions.assertEquals(entity, from);
+    }
+
+    @Test
+    void fromJsonError() {
+        try {
+            var from = JsonUtil.fromJson("[[]]]]", TmpEntity.class);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof LibRuntimeException);
+        }
     }
 
     @Test

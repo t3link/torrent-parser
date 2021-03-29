@@ -309,7 +309,7 @@ public final class LibParser {
             throw new LibRuntimeException("'info' is not satisfactory!");
         }
         if (Objects.isNull(files)) {
-            files = new T3tFiles(new T3tFile(length, name));
+            files = new T3tFiles(new T3tFile(length, List.of(name)));
         }
         // 文件命名
         files.setDirectory(directory);

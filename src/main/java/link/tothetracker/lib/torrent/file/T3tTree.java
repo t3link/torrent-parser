@@ -34,8 +34,9 @@ public final class T3tTree {
         // 是否是文件夹结构
         var directory = files.isDirectory();
 
+        var gen = new IdGenerator();
         for (var file : files.getContainer()) {
-            build(file, pools);
+            build(file, gen, pools);
         }
 
         // 找到深度为 1 的根节点
@@ -50,7 +51,7 @@ public final class T3tTree {
 
         // 封装一个虚拟的根节点, 如果为单文件, 根节点名称是 '.' , 如果是多文件, 节点名称是文件夹名称
         var rootName = directory ? files.getName() : ".";
-        var virtualNode = FileNode.of("", rootName, 0);
+        var virtualNode = FileNode.of(null, "", rootName, 0);
         for (var root : pool0.values()) {
             virtualNode.add(root);
         }
@@ -62,15 +63,16 @@ public final class T3tTree {
     /**
      * 将一个文件的路径描述成树节点
      */
-    private static void build(T3tFile file, List<LinkedHashMap<String, FileNode>> pools) {
+    private static void build(T3tFile file, IdGenerator gen,
+                              List<LinkedHashMap<String, FileNode>> pools) {
         // 从叶子节点 -> 根节点
         FileNode child = null;
-        var paths = file.getPath();
-        for (var index = paths.size() - 1;  index >= 0; index --) {
-            var node = pooled(paths, index + 1, pools);
+        var path = file.path();
+        for (var index = path.size() - 1;  index >= 0; index --) {
+            var node = pooled(gen, path, index + 1, pools);
             // 指定叶子节点
-            if (index == paths.size() - 1) {
-                node.setLength(file.getLength());
+            if (index == path.size() - 1) {
+                node.setLength(file.length());
             }
             // 子节点关联父节点
             if (child != null) {
@@ -84,17 +86,19 @@ public final class T3tTree {
     /**
      * 从节点池中检查取出(创建)节点
      * 如果当前高度的节点在池中存在, 则直接取出
+     *
+     * @param gen               节点id生成器
      * @param paths             文件名字, 对应文件夹或者文件名称
      * @param depth             节点深度
      * @param pools             节点池
      */
-    private static FileNode pooled(List<String> paths, int depth,
+    private static FileNode pooled(IdGenerator gen, List<String> paths, int depth,
                                    List<LinkedHashMap<String, FileNode>> pools) {
         var name = paths.get(depth - 1);
         var key = identify(paths, depth);
         // 如果池为空 则直接创建
         if (null == pools) {
-            return FileNode.of(key, name, depth);
+            return FileNode.of(gen, key, name, depth);
         }
 
         // 判断池中是否有当前高度的节点, 如果小于当前高度, 需要增长到此高度
@@ -105,7 +109,7 @@ public final class T3tTree {
         var pool1 = pools.get(depth - 1);
         // 创建完的 非叶子节点 需要放入池中
         return pool1.computeIfAbsent(
-                key, e -> FileNode.of(e, name, depth)
+                key, k -> FileNode.of(gen, k, name, depth)
         );
     }
 
@@ -156,13 +160,13 @@ public final class T3tTree {
         if (node.getDepth() == 0) {
             tree.append(node.getName());
             tree.append(" ");
-            tree.append(node.getStyledLength());
+            tree.append(node.getSize());
             tree.append("\n");
         } else {
             tree.append(padding(node));
             tree.append(node.getName());
             tree.append(" ");
-            tree.append(node.getStyledLength());
+            tree.append(node.getSize());
             tree.append("\n");
         }
 
@@ -187,7 +191,7 @@ public final class T3tTree {
         var parent = node.getParent();
         while (parent != null) {
             var grand = parent.getParent();
-            if (grand != null && grand.extended() && !parent.isLast()) {
+            if (grand != null && grand.extended() && !parent.last()) {
                 brothers.add(parent.getDepth());
             }
             parent = parent.getParent();

@@ -33,16 +33,16 @@ public final class JsonUtil {
     public static <T> String toJson(T entity) {
         try {
             return MAPPER.writeValueAsString(entity);
-        } catch (JsonProcessingException var3) {
-            throw new LibRuntimeException(var3);
+        } catch (JsonProcessingException ex) {
+            throw new LibRuntimeException(ex);
         }
     }
 
     public static <T> T fromJson(String json, Class<T> type) {
         try {
             return MAPPER.readValue(json, type);
-        } catch (JsonProcessingException var3) {
-            throw new LibRuntimeException(var3);
+        } catch (JsonProcessingException ex) {
+            throw new LibRuntimeException(ex);
         }
     }
 
